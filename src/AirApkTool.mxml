@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   preinitialize="preinitializeHandler(event)">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			
+			private var target:File;
+			
+			private var javaPath:File;
+			
+			private function preinitializeHandler(event:Event):void
+			{
+				var info:NativeProcessStartupInfo = new NativeProcessStartupInfo();
+				var exeFile:File = File.applicationDirectory.resolvePath("SignApk/JavaPath");
+				
+				if(exeFile.exists)
+				{
+					info.executable = exeFile;
+					execute(info,getJavaPathHandler);
+				}
+			}
+			
+			public function getJavaPathHandler(event:ProgressEvent):void
+			{
+				event.target.removeEventListener(ProgressEvent.STANDARD_OUTPUT_DATA, getJavaPathHandler);
+				try
+				{
+					var output:IDataInput = event.target.standardOutput as IDataInput;
+					javaPath = new File(output.readMultiByte(output.bytesAvailable,"iso-8859-01").replace(/\n/g,""));;
+				}
+				catch(error:Error)
+				{
+					Alert.show("Java环境变量配置错误","错误",4,this,close);
+				}
+			}
+			
+			private function AlertCloseHandler(event:CloseEvent):void
+			{
+				this.exit();
+			}
+			
+			protected function selectFile(event:MouseEvent):void
+			{
+				target = new File();
+				target.addEventListener(Event.SELECT,selectHandler);
+				var filter:FileFilter = new FileFilter("apk文件","*.*");
+				target.browse([filter]);
+			}
+			
+			private function selectHandler(event:Event):void
+			{
+				if(javaPath.isDirectory)
+				{
+					var exeFile:File = javaPath.resolvePath("bin/javaw.exe");
+					var jarFile:File = File.applicationDirectory.resolvePath("SignApk/signapk.jar");
+					var pemFile:File = File.applicationDirectory.resolvePath("SignApk/platform.x509.pem");
+					var pk8File:File = File.applicationDirectory.resolvePath("SignApk/platform.pk8");
+					
+					if(exeFile.exists && jarFile.exists && pemFile.exists && pk8File.exists)
+					{
+						var info:NativeProcessStartupInfo = new NativeProcessStartupInfo();
+						info.executable = exeFile;
+						var arguments:Vector.<String> = new Vector.<String>();
+						arguments.push("-jar");
+						arguments.push(jarFile.nativePath);
+						arguments.push(pemFile.nativePath);
+						arguments.push(pk8File.nativePath);
+						arguments.push(target.nativePath);
+						var newFile:File = target.parent.resolvePath(target.name.replace(".apk","_signed.apk"));
+						arguments.push(newFile.nativePath);
+						info.arguments = arguments;
+						execute(info)
+					}
+				}
+				else
+				{
+					Alert.show("Java环境变量配置错误");
+				}
+			}
+			
+			private function execute(info:NativeProcessStartupInfo,result:Function = null):void
+			{
+				var process:NativeProcess = new NativeProcess();
+				if(null != result)
+				{
+					process.addEventListener(ProgressEvent.STANDARD_OUTPUT_DATA,result);
+				}
+				process.start(info);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:Button width="150" height="70" label="选择要签名的apk文件" click="selectFile(event)"/>
+</s:WindowedApplication>

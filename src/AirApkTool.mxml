@@ -47,6 +47,12 @@
 				jar.sign(target);
 			}
 			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+			}
+			
 		]]>
 	</fx:Script>
 	
@@ -55,4 +61,5 @@
 	</fx:Declarations>
 	
 	<s:Button width="150" height="70" label="签名" click="selectFile(event)"/>
+	<s:Button label="反编译Class" click="button1_clickHandler(event)"/>
 </s:WindowedApplication>

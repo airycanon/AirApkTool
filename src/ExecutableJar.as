@@ -2,12 +2,13 @@ package
 {
 	import flash.desktop.NativeProcess;
 	import flash.desktop.NativeProcessStartupInfo;
+	import flash.display.Sprite;
 	import flash.events.NativeProcessExitEvent;
 	import flash.events.ProgressEvent;
 	import flash.filesystem.File;
 	import flash.utils.IDataInput;
 	
-	public class ExecutableJar
+	public class ExecutableJar extends Sprite
 	{
 		private var process:NativeProcess;
 		
@@ -52,7 +53,7 @@ package
 		
 		/**
 		 * 签名apk 
-		 * @param target
+		 * @param target 目标文件，后缀为apk。
 		 */		
 		public function sign(target:File):void
 		{
@@ -75,9 +76,8 @@ package
 		
 		/**
 		 * 反编译class.dex 
-		 * @param target
-		 * @param folder
-		 * 
+		 * @param target 目标文件。
+		 * @param folder 反编译后的文件夹。
 		 */		
 		public function decode(target:File,folder:File):void
 		{
@@ -95,8 +95,8 @@ package
 		
 		/**
 		 * 编译生成class.dex 
-		 * @param target
-		 * @param folder
+		 * @param target 编译后生成的文件。
+		 * @param folder 要编译的目标文件夹。
 		 */		
 		public function encode(target:File,folder:File):void
 		{
@@ -112,6 +112,14 @@ package
 			execute(javaFile,arguments);
 		}
 		
+		/**
+		 * 执行指定的exe文件 
+		 * @param exeFile exe文件。
+		 * @param arguments 命令行参数。
+		 * @param outPut 返回数据时的回调函数。
+		 * @param exit 退出时的回调函数。
+		 * @see flash.desktop.NativeProcess
+		 */		
 		public function execute(exeFile:File,arguments:Vector.<String> = null,outPut:Function = null,exit:Function = null):void
 		{
 			if(exeFile.exists)
@@ -123,10 +131,10 @@ package
 				{
 					process.addEventListener(ProgressEvent.STANDARD_OUTPUT_DATA,function(event:ProgressEvent):void
 					{
-						var output:IDataInput = event.target.standardOutput as IDataInput;
-						if(output)
+						var data:IDataInput = event.target.standardOutput as IDataInput;
+						if(data)
 						{
-							outPut.call(null,output.readMultiByte(output.bytesAvailable,"iso-8859-01"));
+							outPut.call(null,data.readMultiByte(data.bytesAvailable,"iso-8859-01"));
 						}
 					});
 				}
